@@ -22,7 +22,7 @@ class Employee:
     def __repr__(self):
         return self.last_name + ' ' + self.first_name
 
-    def Compare(emp1, emp2):
+    def compare_empl(emp1, emp2):
         if emp1.last_name != emp2.last_name:
             return 0 if emp1.last_name < emp2.last_name else 1
         else:
@@ -52,7 +52,7 @@ class Administrator(Employee):
 
 class EmpList:
     # метод для десериализации
-    def LoadList(path, format):
+    def load_list(path, format):
         dc = {}
         dcl = []  # список для хранения  объектов Dictionary
         if format == 'JSON':
@@ -111,7 +111,7 @@ class EmpList:
 
         return emps
 
-    def SaveList(lst, path, format):
+    def save_list(lst, path, format):
         out_list = []
         for el in lst:
             out_list.append(el.__dict__)
@@ -130,11 +130,11 @@ class EmpList:
                 dom = parseString(xml)
                 f.write(dom.toprettyxml())
 
-    def Sort(lst):
+    def sort_empl(lst):
         try:
             for i in range(0, len(lst) - 1):
                 for j in range(i + 1, len(lst)):
-                    if Employee.Compare(lst[i], lst[j]) == 1:
+                    if Employee.compare_empl(lst[i], lst[j]) == 1:
                         tmp = lst[j]
                         lst[j] = lst[i]
                         lst[i] = tmp
@@ -143,6 +143,6 @@ class EmpList:
 
 
 if __name__ == '__main__':
-    emps = EmpList.LoadList(EMPLOYEES_FILE, OUTPUT_FORMAT)
-    EmpList.Sort(emps)
-    EmpList.SaveList(emps, OUTPUT_FILE, OUTPUT_FORMAT)
+    emps = EmpList.load_list(EMPLOYEES_FILE, OUTPUT_FORMAT)
+    EmpList.sort_empl(emps)
+    EmpList.save_list(emps, OUTPUT_FILE, OUTPUT_FORMAT)

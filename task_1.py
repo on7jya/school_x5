@@ -3,10 +3,14 @@ import sys
 
 file_path = str(sys.argv[1])
 
+
 def create_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--size', nargs='?')
-    return parser
+    try:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--size', nargs='?')
+        return parser
+    except Exception as e:
+        print("Ошибка разбора аргумента из командной строки: " + str(e))
 
 
 def find_and_print_result(list):
@@ -14,29 +18,31 @@ def find_and_print_result(list):
     qty_most_common = 0
     dict_common = dict()  # most_common, qty_most_common
 
-    for item in list:
-        qty = list.count(item)
-        dict_common.update({int(item): qty})
-        if qty > qty_most_common:
-            qty_most_common = qty
-            most_common = int(item)
+    try:
+        for item in list:
+            qty = list.count(item)
+            dict_common.update({int(item): qty})
+            if qty > qty_most_common:
+                qty_most_common = qty
+                most_common = int(item)
 
-    # Если несколько значений встретились одинаковое количество раз, то вывести наименьшее из них.
-    max_value = max(dict_common.values())
-    min_key = most_common
-    for key, value in dict_common.items():
-        if value == max_value:
-            if min_key >= key:
-                min_key = key
-                most_common = key
-                qty_most_common = value
+        # Если несколько значений встретились одинаковое количество раз, то вывести наименьшее из них.
+        max_value = max(dict_common.values())
+        min_key = most_common
+        for key, value in dict_common.items():
+            if value == max_value:
+                if min_key >= key:
+                    min_key = key
+                    most_common = key
+                    qty_most_common = value
 
-    print(str(most_common) + ' - ' + str(qty_most_common))
+        print(str(most_common) + ' - ' + str(qty_most_common))
+        return str(most_common), str(qty_most_common)
+    except TypeError as type_err:
+        print("Некорректное значение в массиве: " + str(type_err))
+    except Exception as e:
+        print("Ошибка поиска значения в массиве: " + str(e))
 
-
-def string_append_to_list(string, list):
-    num = string.replace('\n', '')
-    list.append(num)
 
 def read_from_file(file_path, size_pack):
     try:
@@ -49,15 +55,16 @@ def read_from_file(file_path, size_pack):
                 nums_aggr = []
 
             count += 1
-            string_append_to_list(line, nums_aggr)
-
+            num = line.replace('\n', '')
+            nums_aggr.append(num)
         find_and_print_result(nums_aggr)
-    except IOError:
-        return ""
+    except IOError as ioerr:
+        print("Ошибка ввода вывода: " + str(ioerr))
+    except Exception as e:
+        print("Ошибка чтения и разбора значений из файла: " + str(e))
 
 
 def main():
-
     parser = create_parser()
     args = parser.parse_args(sys.argv[2:])
     if args.size is None:
@@ -70,6 +77,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# в среду доработать отлов ошибок и тесты
