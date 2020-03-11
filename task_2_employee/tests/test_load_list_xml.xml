@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<employees>
+	<employee>
+		<first_name>Piotr</first_name>
+		<last_name>Ivanov</last_name>
+		<email>pp@ya.ru</email>
+		<title/>
+	</employee>
+	<employee>
+		<first_name>Irina</first_name>
+		<last_name>Petrova</last_name>
+		<email>ir@ya.ru</email>
+		<title>Разработчик</title>
+		<systems>
+			<name>1C</name>
+			<name>Excel</name>
+			<name>Word</name>
+		</systems>
+	</employee>
+	<employee>
+		<first_name>Irina</first_name>
+		<last_name>Nikolaeva</last_name>
+		<email>ir@ya.ru</email>
+		<title>Администратор</title>
+		<vms>
+			<ip>127.0.0.1</ip>
+			<ip>192.168.1.2</ip>
+			<ip>133.134.122.111</ip>
+		</vms>
+	</employee>
+</employees>
