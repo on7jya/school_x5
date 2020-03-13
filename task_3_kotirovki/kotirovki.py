@@ -1,116 +1,46 @@
-import argparse
-import csv
-import json
-import requests as req
-import xml.etree.ElementTree as ET
-import datetime
 import sys
+import time
 
+from moex import *
 
-def create_parser():
-    """Parse arguments from command line"""
-    try:
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-format', nargs='?')
-        parser.add_argument('-out', nargs='?')
-        return parser
-    except Exception as e:
-        print("ошибка разбора аргументов из командной строки: " + str(e))
-
-
-def get_request_moex():
-    """GET request to MOEX API"""
-    try:
-        url = 'https://iss.moex.com/iss/engines/stock/markets/shares/securities/five.xml'
-        response = req.get(url, timeout=30)
-        response.raise_for_status()
-    except req.Timeout:
-        print(f'ошибка timeout, url: {url}')
-    except req.HTTPError as err:
-        code = err.response.status_code
-        print(f'ошибка url: {url}, code: {code}')
-    except req.RequestException as e:
-        print(f'ошибка скачивания url: {url}')
-    except Exception as e:
-        print(f'ошибка: {str(e)}')
-    else:
-        # print(response.content)
-        pass
-    return response.content
-
-
-def parse_XML(format_out, path):
-    """Parse the XML file from API"""
-    xml_tmp = get_request_moex()
-    tree = ET.XML(xml_tmp)
-    try:
-        row = tree.find("data[@id='marketdata']/rows/row")
-
-        row_to_file = []
-
-        value_updatetime = row.get('UPDATETIME')
-        value_open = row.get('OPEN')
-        value_low = row.get('LOW')
-        value_high = row.get('HIGH')
-        value_last = row.get('LAST')
-
-        prev_updatetime = last_time_from_file(path)
-        print('prev_updatetime ' + prev_updatetime)
-        print('UPDATETIME ' + value_updatetime)
-
-        if prev_updatetime != value_updatetime:
-            row_to_file.append(datetime.datetime.now().strftime("%Y-%m-%d %T"))
-            row_to_file.append(value_updatetime)
-            row_to_file.append(value_open)
-            row_to_file.append(value_low)
-            row_to_file.append(value_high)
-            row_to_file.append(value_last)
-
-            save_to_file(row_to_file, path, format_out)
-        else:
-            print(f'UPDATETIME совпадает с последним имеющимся значением, запись в файл не будет осуществлена!')
-    except ET.ParseError as e:
-        print(f'ошибка парсинга: {str(e)}')
-    except Exception as e:
-        print(f'ошибка: {str(e)}')
-
-
-def save_to_file(lst, path, format):
-    """Write information to output file"""
-    try:
-        if format.upper() == 'CSV':
-            with open(path, "a", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerow(lst)
-        elif format.upper() == 'JSON':
-            with open(path, 'w') as f:
-                json.dump(lst, f)
-        else:
-            print(f'задан неизвестный формат: {format.upper()}')
-    except Exception as e:
-        print(f'ошибка записи в файл {str(e)}')
-
-
-def last_time_from_file(path):
-    """Parsing a value last updatetime from output file"""
-    try:
-        with open(path, "r") as file:
-            last_line = file.readlines()[-1]
-            print(last_line)
-        last_line = last_line.split(',')
-        prev_updatetime = last_line[1].strip(' ').strip('"')
-        return prev_updatetime
-    except Exception as e:
-        print(f'в файле нет строк, проверка на последнее значение из файла не сработает: {str(e)}')
-        return 'no_time'
+WAIT_TIME = 60  # default refresh time
 
 
 def main():
+    logger = log_to_file(namelogger="moex_X5")
+    logger.info("============================")
+    logger.info("Started...")
     parser = create_parser()
     args = parser.parse_args(sys.argv[1:])
-    # print(args.format)
-    # print(args.out)
-    parse_XML(args.format, args.out)
+
+    refresh_time = None
+    logger.info('args.format = ' + args.format)
+    logger.info('args.out = ' + args.out)
+    logger.info('args.watch = ' + str(args.watch))
+    logger.info('args.refresh = ' + str(refresh_time))
+
+    if args.watch:
+        logger.info("watch turned on")
+        if isinstance(args.refresh, int):
+            refresh_time = args.refresh
+        else:
+            refresh_time = WAIT_TIME
+        while True:
+            try:
+                response_xml = get_request_moex()
+                updated_file = parse_xml(response_xml, args.format, args.out)
+                if updated_file:
+                    log_to_console('Data has been updated')
+                else:
+                    log_to_console('No updates')
+                time.sleep(refresh_time)
+            except KeyboardInterrupt:
+                logger.debug('User aborted operation')
+                exit()
+    else:
+        response_xml = get_request_moex()
+        parse_xml(response_xml, args.format, args.out)
+    logger.info("Successful!")
 
 
 if __name__ == "__main__":
